@@ -10,7 +10,6 @@ import {
   Button,
 } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import SchoolIcon from '@mui/icons-material/School';
 
 /**

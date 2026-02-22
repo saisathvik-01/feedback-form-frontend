@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
   Chip,
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
