@@ -9,6 +9,7 @@ import Analytics from './pages/Analytics';
 import CreateForm from './pages/CreateForm';
 import Courses from './pages/Courses';
 import SubmittedForms from './pages/SubmittedForms';
+import ForgotPassword from './pages/ForgotPassword';
 import Navbar from './components/Navbar';
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register onRegister={handleRegister} />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/student" element={<StudentDashboard auth={auth} />} />
         <Route path="/admin" element={<AdminDashboard auth={auth} />} />
         <Route path="/form" element={<FeedbackForm auth={auth} />} />

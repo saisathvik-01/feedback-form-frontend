@@ -222,7 +222,7 @@ const Login = ({ onLogin }) => {
             </Box>
 
             {/* Registration Link */}
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Box sx={{ textAlign: 'center', mt: 2, mb: 1 }}>
               <Typography variant="body2" sx={{ color: '#666' }}>
                 Don't have an account?{' '}
                 <Link
@@ -235,6 +235,28 @@ const Login = ({ onLogin }) => {
                 >
                   Register here
                 </Link>
+              </Typography>
+            </Box>
+
+            {/* Forgot Password Link */}
+            <Box sx={{ textAlign: 'center', mb: 2 }}>
+              <Typography variant="body2" sx={{ color: '#666' }}>
+                <Button
+                  onClick={() => navigate('/forgot-password')}
+                  sx={{
+                    color: '#667eea',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    p: 0,
+                    minWidth: 'auto',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Forgot Password?
+                </Button>
               </Typography>
             </Box>
 
