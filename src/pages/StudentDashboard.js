@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import SchoolIcon from '@mui/icons-material/School';
+import SendIcon from '@mui/icons-material/Send';
 
 /**
  * StudentDashboard Component - Main student dashboard
@@ -37,6 +38,15 @@ const StudentDashboard = ({ auth }) => {
       action: () => navigate('/courses'),
       actionLabel: 'View Courses',
       color: '#e8f5e9',
+    },
+    {
+      id: 3,
+      title: 'My Submitted Forms',
+      description: 'Review feedback you have submitted',
+      icon: <SendIcon sx={{ fontSize: 48, color: '#1976d2' }} />,
+      action: () => navigate('/submitted'),
+      actionLabel: 'View Submissions',
+      color: '#e3f2fd',
     },
   ];
 

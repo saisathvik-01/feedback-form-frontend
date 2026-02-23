@@ -8,6 +8,7 @@ import FeedbackForm from './pages/FeedbackForm';
 import Analytics from './pages/Analytics';
 import CreateForm from './pages/CreateForm';
 import Courses from './pages/Courses';
+import SubmittedForms from './pages/SubmittedForms';
 import Navbar from './components/Navbar';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
         <Route path="/form" element={<FeedbackForm auth={auth} />} />
         <Route path="/analytics" element={<Analytics auth={auth} />} />
         <Route path="/courses" element={<Courses />} />
+        <Route path="/submitted" element={<SubmittedForms />} />
         <Route path="/create" element={<CreateForm auth={auth} />} />
         {/* fallback to login for any unknown path */}
         <Route path="*" element={<Navigate to="/" replace />} />

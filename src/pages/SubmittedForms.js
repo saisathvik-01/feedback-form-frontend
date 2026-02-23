@@ -1,16 +1,16 @@
 import React from 'react';
 import { Container, Card, CardContent, Typography, Grid } from '@mui/material';
-import { courses } from '../data/demoData';
+import { submittedForms } from '../data/demoData';
 
-function Courses() {
+function SubmittedForms() {
   return (
     <Container sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ fontWeight: 700, color: '#333', mb: 3 }}>
-        My Courses
+        My Submitted Feedback
       </Typography>
       <Grid container spacing={3}>
-        {courses.map((course) => (
-          <Grid item xs={12} sm={6} md={4} key={course.id}>
+        {submittedForms.map((form) => (
+          <Grid item xs={12} sm={6} md={4} key={form.id}>
             <Card
               sx={{
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -23,10 +23,13 @@ function Courses() {
             >
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#333', mb: 1 }}>
-                  {course.name}
+                  {form.course}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
-                  {course.instructor}
+                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
+                  Rating: {form.rating}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#999' }}>
+                  Submitted on {form.date}
                 </Typography>
               </CardContent>
             </Card>
@@ -37,4 +40,4 @@ function Courses() {
   );
 }
 
-export default Courses;
+export default SubmittedForms;

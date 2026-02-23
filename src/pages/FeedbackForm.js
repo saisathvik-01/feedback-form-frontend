@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { courses } from '../data/demoData';
 
 /**
  * FeedbackForm Component
@@ -41,16 +42,7 @@ const FeedbackForm = ({ auth }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // Sample course and faculty data
-  const courses = [
-    { id: 1, name: 'Introduction to React' },
-    { id: 2, name: 'Advanced JavaScript' },
-    { id: 3, name: 'Web Development Fundamentals' },
-    { id: 4, name: 'UI/UX Design Principles' },
-    { id: 5, name: 'Database Management' },
-    { id: 6, name: 'Full Stack Development' },
-    { id: 7, name: 'Mobile App Development' },
-  ];
+  // Sample faculty data (courses imported from shared demo data)
 
   const faculty = [
     { id: 1, name: 'Dr. John Smith' },
