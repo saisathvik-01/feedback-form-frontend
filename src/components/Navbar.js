@@ -28,8 +28,8 @@ const Navbar = ({ auth, onLogout }) => {
     return null;
   }
 
-  // If not logged in, don't show navbar
-  if (!auth.isLoggedIn) {
+  // If auth object is missing or user is not logged in, hide navbar
+  if (!auth || !auth.isLoggedIn) {
     return null;
   }
 
@@ -52,11 +52,13 @@ const Navbar = ({ auth, onLogout }) => {
   };
 
   // Get user initials
-  const initials = auth.name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
+  const initials = auth?.name
+    ? auth.name
+        .split(' ')
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase()
+    : '';
 
   return (
     <AppBar position="static" sx={{ background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' }}>
@@ -65,7 +67,7 @@ const Navbar = ({ auth, onLogout }) => {
           {/* Logo and Title */}
           <Box
             sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', mr: 4 }}
-            onClick={() => navigate(auth.role === 'STUDENT' ? '/student' : '/admin')}
+            onClick={() => navigate(auth?.role === 'STUDENT' ? '/student' : '/admin')}
           >
             <FeedbackIcon sx={{ fontSize: 32, mr: 1.5 }} />
             <Typography
@@ -165,10 +167,10 @@ const Navbar = ({ auth, onLogout }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ textAlign: 'right' }}>
               <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                {auth.name}
+                {auth?.name || 'User'}
               </Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                {auth.role === 'STUDENT' ? 'Student' : 'Faculty'}
+                {auth?.role === 'STUDENT' ? 'Student' : 'Faculty'}
               </Typography>
             </Box>
             <Avatar
@@ -192,7 +194,7 @@ const Navbar = ({ auth, onLogout }) => {
               <MenuItem disabled>
                 <AccountCircleIcon sx={{ mr: 1 }} />
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {auth.name}
+                  {auth?.name || 'User'}
                 </Typography>
               </MenuItem>
               <MenuItem onClick={handleMenuClose}>
