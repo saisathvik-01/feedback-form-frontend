@@ -34,7 +34,7 @@ const StudentDashboard = ({ auth }) => {
       title: 'My Courses',
       description: 'View all your enrolled courses',
       icon: <SchoolIcon sx={{ fontSize: 48, color: '#388e3c' }} />,
-      action: () => {},
+      action: () => navigate('/courses'),
       actionLabel: 'View Courses',
       color: '#e8f5e9',
     },
