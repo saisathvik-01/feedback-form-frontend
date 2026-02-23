@@ -26,6 +26,8 @@ import PersonIcon from '@mui/icons-material/Person';
  */
 const Register = ({ onRegister }) => {
   const navigate = useNavigate();
+  const passwordRegex =
+    /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{6,}$/;
   const [registerData, setRegisterData] = useState({
     name: '',
     id: '',
@@ -35,6 +37,7 @@ const Register = ({ onRegister }) => {
     role: 'STUDENT',
   });
   const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Handle input change
@@ -42,6 +45,17 @@ const Register = ({ onRegister }) => {
     const { name, value } = e.target;
     setRegisterData((prev) => ({ ...prev, [name]: value }));
     setError('');
+    
+    // Validate password on input
+    if (name === 'password') {
+      if (!passwordRegex.test(value)) {
+        setPasswordError(
+          'Password must be at least 6 characters, include 1 uppercase, 1 number, and 1 special character.'
+        );
+      } else {
+        setPasswordError('');
+      }
+    }
   };
 
   // Handle form submission
@@ -70,6 +84,12 @@ const Register = ({ onRegister }) => {
 
     if (registerData.password.length < 6) {
       setError('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
+
+    if (!passwordRegex.test(registerData.password)) {
+      setError('Password must contain uppercase, number, and special character');
       setLoading(false);
       return;
     }
@@ -255,6 +275,13 @@ const Register = ({ onRegister }) => {
                   ),
                 }}
               />
+
+              {/* Password Error Message */}
+              {passwordError && (
+                <Typography color="error" variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                  {passwordError}
+                </Typography>
+              )}
 
               {/* Confirm Password Field */}
               <TextField
