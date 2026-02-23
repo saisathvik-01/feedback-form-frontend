@@ -38,6 +38,7 @@ const Register = ({ onRegister }) => {
   });
   const [error, setError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [confirmError, setConfirmError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Handle input change
@@ -55,6 +56,25 @@ const Register = ({ onRegister }) => {
       } else {
         setPasswordError('');
       }
+      // Also validate confirm password match when main password changes
+      if (registerData.confirmPassword && value !== registerData.confirmPassword) {
+        setConfirmError('Passwords do not match');
+      } else if (registerData.confirmPassword) {
+        setConfirmError('');
+      }
+    }
+  };
+
+  // Handle confirm password change
+  const handleConfirmChange = (e) => {
+    const value = e.target.value;
+    setRegisterData((prev) => ({ ...prev, confirmPassword: value }));
+    setError('');
+
+    if (value !== registerData.password) {
+      setConfirmError('Passwords do not match');
+    } else {
+      setConfirmError('');
     }
   };
 
@@ -291,9 +311,11 @@ const Register = ({ onRegister }) => {
                 type="password"
                 placeholder="Re-enter your password"
                 value={registerData.confirmPassword}
-                onChange={handleChange}
+                onChange={handleConfirmChange}
                 margin="normal"
                 variant="outlined"
+                error={!!confirmError}
+                helperText={confirmError}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
