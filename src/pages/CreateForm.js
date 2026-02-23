@@ -61,7 +61,7 @@ const CreateForm = ({ auth }) => {
       title: formTitle,
       description: formDescription,
       questions: questions.filter((q) => q.trim()),
-      createdBy: auth.name,
+      createdBy: auth?.name || "User",
     });
 
     setSubmitted(true);

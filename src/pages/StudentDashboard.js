@@ -59,7 +59,7 @@ const StudentDashboard = ({ auth }) => {
               mb: 1,
             }}
           >
-            Welcome Back, {auth.name}! 👋
+            Welcome Back, {auth?.name || "Student"}! 👋
           </Typography>
           <Typography
             variant="body1"
