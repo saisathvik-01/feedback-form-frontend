@@ -14,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -30,6 +31,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -50,22 +54,30 @@ public class AuthController {
                     .body(Map.of("message", "Enter valid Username (10-digit ID) or University Email"));
             }
 
-            // Authenticate user
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(identifier, loginRequest.getPassword()));
+            // Find user by username or email
+            User user = authService.findByUsernameOrEmail(identifier)
+                    .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
+            // Compare raw password with encoded password
+            if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                throw new RuntimeException("Invalid credentials");
+            }
+
+            UserPrincipal userDetails = UserPrincipal.create(user);
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtils.generateToken(authentication);
 
-            UserPrincipal userDetails = (UserPrincipal) authentication.getPrincipal();
-
             return ResponseEntity.ok(new AuthResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                userDetails.getRole(),
-                userDetails.getFacultyName(),
-                userDetails.getSection()));
+                    userDetails.getId(),
+                    userDetails.getUsername(),
+                    userDetails.getEmail(),
+                    userDetails.getRole(),
+                    userDetails.getFacultyName(),
+                    userDetails.getSection()));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -110,7 +122,7 @@ public class AuthController {
         // Create new user account
         User user = new User(signUpRequest.getUsername(),
                            signUpRequest.getEmail(),
-                           signUpRequest.getPassword(), // Password will be encoded in service
+                           signUpRequest.getPassword(),
                            signUpRequest.getRole());
         user.setFacultyName(signUpRequest.getFacultyName());
         user.setSection(signUpRequest.getSection());

@@ -39,7 +39,7 @@ public class AuthService {
 
     public User save(User user) {
         // Encode password before saving
-        if (user.getPassword() != null && !user.getPassword().startsWith("$2a$")) {
+        if (user.getPassword() != null && !user.getPassword().startsWith("$2")) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
         return userRepository.save(user);
