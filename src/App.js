@@ -1,55 +1,72 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Auth Pages
 import Login from './pages/Login';
-import Register from './pages/Register';
-import StudentDashboard from './pages/StudentDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import FeedbackForm from './pages/FeedbackForm';
-import Analytics from './pages/Analytics';
-import CreateForm from './pages/CreateForm';
-import Courses from './pages/Courses';
-import SubmittedForms from './pages/SubmittedForms';
+import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
-import Navbar from './components/Navbar';
+
+// Main Pages
+import AdminDashboard from './pages/AdminDashboard';
+import StudentFeedback from './pages/StudentFeedback';
+import SubmittedFeedback from './pages/SubmittedFeedback';
+import Analytics from './pages/Analytics';
 
 function App() {
-  const [auth, setAuth] = useState(null);
-
-  const handleLogin = (email, password, role, name, id) => {
-    // simple stub that marks user as logged in
-    const user = { email, password, role, name, id, isLoggedIn: true };
-    setAuth(user);
-    return true; // indicate success to caller
-  };
-
-  const handleRegister = (name, id, email, password, role) => {
-    const user = { name, id, email, password, role, isLoggedIn: true };
-    setAuth(user);
-    return true;
-  };
-
-  const handleLogout = () => {
-    setAuth(null);
-  };
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme');
+    const defaultTheme = storedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', defaultTheme === 'dark');
+    document.body.classList.toggle('dark', defaultTheme === 'dark');
+  }, []);
 
   return (
-    <BrowserRouter>
-      <Navbar auth={auth} onLogout={handleLogout} />
+    <Router>
       <Routes>
-        <Route path="/" element={<Login onLogin={handleLogin} />} />
-        <Route path="/register" element={<Register onRegister={handleRegister} />} />
+        {/* Auth Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/student" element={<StudentDashboard auth={auth} />} />
-        <Route path="/admin" element={<AdminDashboard auth={auth} />} />
-        <Route path="/form" element={<FeedbackForm auth={auth} />} />
-        <Route path="/analytics" element={<Analytics auth={auth} />} />
-        <Route path="/courses" element={<Courses />} />
-        <Route path="/submitted" element={<SubmittedForms />} />
-        <Route path="/create" element={<CreateForm auth={auth} />} />
-        {/* fallback to login for any unknown path */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/feedback"
+          element={
+            <ProtectedRoute>
+              <StudentFeedback />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/submitted"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <SubmittedFeedback />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'FACULTY']}>
+              <Analytics />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

@@ -16,6 +16,27 @@ body {
   color: #333;
 }
 
+body.dark {
+  background-color: #020617;
+  color: #e2e8f0;
+}
+
+body.dark ::-webkit-scrollbar-track {
+  background: #081124;
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+body.dark .MuiCard-root:hover {
+  box-shadow: 0 10px 28px rgba(255, 255, 255, 0.08);
+}
+
+body.dark .MuiButton-root:hover {
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.08);
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;

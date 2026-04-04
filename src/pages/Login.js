@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Box,
@@ -10,26 +10,30 @@ import {
   Typography,
   Alert,
   InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
+import { login } from '../utils/api';
 
 /**
  * Login Component - User authentication with role selection
  */
-const Login = ({ onLogin }) => {
+const Login = () => {
   const navigate = useNavigate();
   const [loginData, setLoginData] = useState({
-    email: '',
+    identifier: '',
     password: '',
-    role: 'STUDENT',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const authMessage = localStorage.getItem('authError');
+    if (authMessage) {
+      setError(authMessage);
+      localStorage.removeItem('authError');
+    }
+  }, []);
 
   // Handle input change
   const handleChange = (e) => {
@@ -39,39 +43,41 @@ const Login = ({ onLogin }) => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     // Validation
-    if (!loginData.email || !loginData.password) {
-      setError('Please fill in all fields');
+    if (!loginData.identifier || !loginData.password) {
+      setError('Please enter your username/email and password');
       setLoading(false);
       return;
     }
 
-    if (!loginData.email.includes('@')) {
-      setError('Please enter a valid email');
-      setLoading(false);
-      return;
-    }
+    try {
+      const response = await login(loginData.identifier, loginData.password);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify({
+        id: response.id,
+        username: response.username,
+        email: response.email,
+        role: response.role,
+        facultyName: response.facultyName,
+        section: response.section
+      }));
 
-    // Simulate login
-    setTimeout(() => {
-      const success = onLogin(
-        loginData.email,
-        loginData.password,
-        loginData.role,
-        loginData.email.split('@')[0],
-        '12345'
-      );
-
-      if (success) {
-        // Redirect based on role
-        navigate(loginData.role === 'STUDENT' ? '/student' : '/admin');
+      if (response.role === 'STUDENT') {
+        navigate('/feedback');
+      } else if (response.role === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/analytics');
       }
+    } catch (loginError) {
+      setError(loginError?.message || 'Invalid credentials. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -142,11 +148,11 @@ const Login = ({ onLogin }) => {
               {/* Email Field */}
               <TextField
                 fullWidth
-                name="email"
-                label="Email Address"
-                type="email"
-                placeholder="you@example.com"
-                value={loginData.email}
+                name="identifier"
+                label="Username or Email"
+                type="text"
+                placeholder="10-digit ID or university email"
+                value={loginData.identifier}
                 onChange={handleChange}
                 margin="normal"
                 variant="outlined"
@@ -158,20 +164,6 @@ const Login = ({ onLogin }) => {
                   ),
                 }}
               />
-
-              {/* Role Selection */}
-              <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
-                <InputLabel>Login as</InputLabel>
-                <Select
-                  name="role"
-                  value={loginData.role}
-                  onChange={handleChange}
-                  label="Login as"
-                >
-                  <MenuItem value="STUDENT">Student</MenuItem>
-                  <MenuItem value="FACULTY">Faculty</MenuItem>
-                </Select>
-              </FormControl>
 
               {/* Password Field */}
               <TextField
@@ -226,7 +218,7 @@ const Login = ({ onLogin }) => {
               <Typography variant="body2" sx={{ color: '#666' }}>
                 Don't have an account?{' '}
                 <Link
-                  to="/register"
+                  to="/signup"
                   style={{
                     color: '#667eea',
                     textDecoration: 'none',
