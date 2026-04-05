@@ -21,8 +21,9 @@ const Signup = () => {
   const emailRegex = /^\d{10}@kluniversity\.in$/;
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
-  const validateField = (name, value) => {
+  const validateField = (name, value, currentData = formData) => {
     let error = '';
+    const nextData = { ...currentData, [name]: value };
 
     switch (name) {
       case 'username':
@@ -39,12 +40,12 @@ const Signup = () => {
         if (!passwordRegex.test(value)) {
           error = 'Password must be 8+ characters with uppercase, number, and special character';
         }
-        if (formData.confirmPassword && formData.confirmPassword !== value) {
+        if (nextData.confirmPassword && nextData.confirmPassword !== value) {
           setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
         }
         break;
       case 'confirmPassword':
-        if (value !== formData.password) {
+        if (value !== nextData.password) {
           error = 'Passwords do not match';
         }
         break;
@@ -56,30 +57,30 @@ const Signup = () => {
     return !error;
   };
 
-  const validateForm = () => {
+  const validateForm = (currentData = formData) => {
     const newErrors = {};
     let isFormValid = true;
 
     // Validate username
-    if (!usernameRegex.test(formData.username)) {
+    if (!usernameRegex.test(currentData.username)) {
       newErrors.username = 'Username must be exactly 10 digits';
       isFormValid = false;
     }
 
     // Validate email
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(currentData.email)) {
       newErrors.email = 'Email must be in format: 1234567890@kluniversity.in';
       isFormValid = false;
     }
 
     // Validate password
-    if (!passwordRegex.test(formData.password)) {
+    if (!passwordRegex.test(currentData.password)) {
       newErrors.password = 'Password must be 8+ characters with uppercase, number, and special character';
       isFormValid = false;
     }
 
     // Validate confirm password
-    if (formData.password !== formData.confirmPassword) {
+    if (currentData.password !== currentData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
       isFormValid = false;
     }
@@ -91,13 +92,14 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const nextFormData = { ...formData, [name]: value };
+    setFormData(nextFormData);
 
-    // Validate field on change
-    validateField(name, value);
+    // Validate field on change with the latest values
+    validateField(name, value, nextFormData);
 
-    // Re-validate entire form
-    setTimeout(validateForm, 100);
+    // Re-validate entire form using updated values
+    setTimeout(() => validateForm(nextFormData), 100);
   };
 
   const handleSubmit = async (e) => {
