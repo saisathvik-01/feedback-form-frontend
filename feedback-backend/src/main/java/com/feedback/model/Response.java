@@ -18,10 +18,10 @@ public class Response {
     @Column(nullable = false)
     private Long studentId;
 
-    @Column(nullable = false)
+    @Column(name = "course_id")
     private Long courseId;
 
-    @Column(nullable = false)
+    @Column(name = "form_id")
     private Long formId;
 
     @ManyToOne(fetch = FetchType.LAZY)

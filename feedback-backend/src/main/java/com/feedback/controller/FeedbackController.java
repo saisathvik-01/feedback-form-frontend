@@ -7,6 +7,8 @@ import com.feedback.model.Feedback;
 import com.feedback.service.FeedbackService;
 import com.feedback.security.UserPrincipal;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/feedback")
 public class FeedbackController {
 
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackController.class);
+
     @Autowired
     private FeedbackService feedbackService;
 
@@ -32,11 +36,13 @@ public class FeedbackController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> submitFeedback(@Valid @RequestBody FeedbackRequest feedbackRequest,
                                             Authentication authentication) {
+        logger.info("Submit feedback called for user: {}", authentication.getName());
         try {
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
             feedbackService.submitFeedback(feedbackRequest, userPrincipal.getId());
             return ResponseEntity.ok(Map.of("message", "Feedback submitted successfully"));
         } catch (Exception e) {
+            logger.error("Error submitting feedback: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "Error submitting feedback: " + e.getMessage()));
         }
