@@ -45,21 +45,34 @@ public class FeedbackController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('FACULTY')")
     public ResponseEntity<List<FeedbackResponse>> getAllFeedback(
+            Authentication authentication,
             @RequestParam(required = false) String courseId,
             @RequestParam(required = false) String facultyName,
             @RequestParam(required = false) String section,
             @RequestParam(required = false) String semester,
             @RequestParam(required = false) String academicYear) {
 
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         List<Feedback> feedbacks;
-        if (courseId != null || facultyName != null || section != null || semester != null || academicYear != null) {
-            feedbacks = feedbackService.getFeedbackWithFilters(courseId, facultyName, section, semester, academicYear);
+        
+        // Faculty: only see their own feedback and cannot see student identity
+        if ("FACULTY".equals(userPrincipal.getRole().toString())) {
+            if (courseId != null || facultyName != null || section != null || semester != null || academicYear != null) {
+                feedbacks = feedbackService.getFeedbackWithFilters(courseId, userPrincipal.getFacultyName(), section, semester, academicYear);
+            } else {
+                feedbacks = feedbackService.getFeedbackByFacultyName(userPrincipal.getFacultyName());
+            }
         } else {
-            feedbacks = feedbackService.getAllFeedback();
+            // Admin: see all feedback
+            if (courseId != null || facultyName != null || section != null || semester != null || academicYear != null) {
+                feedbacks = feedbackService.getFeedbackWithFilters(courseId, facultyName, section, semester, academicYear);
+            } else {
+                feedbacks = feedbackService.getAllFeedback();
+            }
         }
 
         List<FeedbackResponse> responses = feedbacks.stream()
-                .map(this::convertToResponse)
+                .map(feedback -> convertToResponse(feedback, userPrincipal))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(responses);
@@ -71,27 +84,31 @@ public class FeedbackController {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         List<Feedback> feedbacks = feedbackService.getFeedbackByStudentId(userPrincipal.getId());
         List<FeedbackResponse> responses = feedbacks.stream()
-                .map(this::convertToResponse)
+                .map(feedback -> convertToResponse(feedback))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
-    @GetMapping("/faculty/{facultyName}")
+    @GetMapping("/faculty-summary")
     @PreAuthorize("hasRole('FACULTY')")
-    public ResponseEntity<List<FeedbackResponse>> getFeedbackForFaculty(
-            @PathVariable String facultyName,
-            Authentication authentication) {
-
+    public ResponseEntity<?> getFacultyFeedbackSummary(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        if (!userPrincipal.getFacultyName().equals(facultyName)) {
-            return ResponseEntity.badRequest().body(List.of());
-        }
+        List<Feedback> feedbacks = feedbackService.getFeedbackByFacultyName(userPrincipal.getFacultyName());
 
-        List<Feedback> feedbacks = feedbackService.getFeedbackByFacultyName(facultyName);
-        List<FeedbackResponse> responses = feedbacks.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        // Calculate aggregated data for faculty
+        int totalResponses = feedbacks.size();
+        double averageRating = feedbacks.stream()
+                .mapToDouble(f -> f.getRating() != null ? f.getRating() : 0.0)
+                .average()
+                .orElse(0.0);
+
+        Map<String, Object> summary = Map.of(
+                "facultyName", userPrincipal.getFacultyName(),
+                "totalResponses", totalResponses,
+                "averageRating", Math.round(averageRating * 100.0) / 100.0
+        );
+
+        return ResponseEntity.ok(summary);
     }
 
     @DeleteMapping("/{id}")
@@ -185,5 +202,29 @@ public class FeedbackController {
                 feedback.getComment(),
                 feedback.getCreatedAt()
         );
+    }
+
+    // Overload for role-based visibility - Faculty should not see student info
+    private FeedbackResponse convertToResponse(Feedback feedback, UserPrincipal userPrincipal) {
+        // For Faculty: hide student identity, keep only aggregated data
+        if ("FACULTY".equals(userPrincipal.getRole().toString())) {
+            return new FeedbackResponse(
+                    feedback.getId(),
+                    "Anonymous",  // Hide student name
+                    "hidden@kluniversity.in",  // Hide student email
+                    feedback.getCourseId(),
+                    feedback.getCourseName(),
+                    feedback.getFacultyName(),
+                    feedback.getSection(),
+                    feedback.getSemester(),
+                    feedback.getAcademicYear(),
+                    feedback.getRating(),
+                    feedback.getRatings(),
+                    feedback.getComment(),
+                    feedback.getCreatedAt()
+            );
+        }
+        // For Admin: show all data
+        return convertToResponse(feedback);
     }
 }

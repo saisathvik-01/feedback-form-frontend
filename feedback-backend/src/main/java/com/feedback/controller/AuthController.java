@@ -10,7 +10,6 @@ import com.feedback.security.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,13 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
     @Autowired
     private AuthService authService;
@@ -39,19 +35,25 @@ public class AuthController {
     private JwtUtils jwtUtils;
 
     // Validation regexes
-    private static final Pattern USERNAME_PATTERN = Pattern.compile("^\\d{10}$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^\\d{10}@kluniversity\\.in$");
+    private static final Pattern STUDENT_USERNAME_PATTERN = Pattern.compile("^\\d{10}$");
+    private static final Pattern STUDENT_EMAIL_PATTERN = Pattern.compile("^\\d{10}@kluniversity\\.in$");
+    private static final Pattern FACULTY_ADMIN_USERNAME_PATTERN = Pattern.compile("^.{3,}$");
+    private static final Pattern GENERAL_EMAIL_PATTERN = Pattern.compile("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).{8,}$");
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-            // Validate input format
+            // Validate input format - allow both student format and general formats
             String identifier = loginRequest.getIdentifier();
-            if (!USERNAME_PATTERN.matcher(identifier).matches() &&
-                !EMAIL_PATTERN.matcher(identifier).matches()) {
+            boolean isValidFormat = STUDENT_USERNAME_PATTERN.matcher(identifier).matches() ||
+                                   STUDENT_EMAIL_PATTERN.matcher(identifier).matches() ||
+                                   FACULTY_ADMIN_USERNAME_PATTERN.matcher(identifier).matches() ||
+                                   GENERAL_EMAIL_PATTERN.matcher(identifier).matches();
+
+            if (!isValidFormat) {
                 return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Enter valid Username (10-digit ID) or University Email"));
+                    .body(Map.of("message", "Enter valid Username or Email"));
             }
 
             // Find user by username or email
@@ -89,14 +91,24 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         Map<String, String> errors = new HashMap<>();
 
-        // Validate username
-        if (signUpRequest.getUsername() != null && !USERNAME_PATTERN.matcher(signUpRequest.getUsername()).matches()) {
-            errors.put("username", "Username must be exactly 10 digits");
-        }
-
-        // Validate email
-        if (!EMAIL_PATTERN.matcher(signUpRequest.getEmail()).matches()) {
-            errors.put("email", "Email must be in format: 1234567890@kluniversity.in");
+        // Role-based validation for username
+        if (signUpRequest.getRole() != null) {
+            if ("STUDENT".equals(signUpRequest.getRole())) {
+                if (signUpRequest.getUsername() != null && !STUDENT_USERNAME_PATTERN.matcher(signUpRequest.getUsername()).matches()) {
+                    errors.put("username", "Student ID must be exactly 10 digits");
+                }
+                if (!STUDENT_EMAIL_PATTERN.matcher(signUpRequest.getEmail()).matches()) {
+                    errors.put("email", "Email must be in format: 1234567890@kluniversity.in");
+                }
+            } else {
+                // FACULTY or ADMIN
+                if (signUpRequest.getUsername() != null && !FACULTY_ADMIN_USERNAME_PATTERN.matcher(signUpRequest.getUsername()).matches()) {
+                    errors.put("username", "Username must be at least 3 characters");
+                }
+                if (!GENERAL_EMAIL_PATTERN.matcher(signUpRequest.getEmail()).matches()) {
+                    errors.put("email", "Please enter a valid email address");
+                }
+            }
         }
 
         // Validate password

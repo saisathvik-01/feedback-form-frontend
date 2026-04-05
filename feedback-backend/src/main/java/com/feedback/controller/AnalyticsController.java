@@ -66,4 +66,18 @@ public class AnalyticsController {
         List<TrendDto> result = analyticsService.getTrendOverTime(userPrincipal, courseId, facultyName, section, semester, academicYear);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/rating-distribution")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('FACULTY')")
+    public ResponseEntity<Map<Integer, Long>> getRatingDistribution(
+            Authentication authentication,
+            @RequestParam(required = false) String courseId,
+            @RequestParam(required = false) String facultyName,
+            @RequestParam(required = false) String section,
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String academicYear) {
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        Map<Integer, Long> result = analyticsService.getRatingDistribution(userPrincipal, courseId, facultyName, section, semester, academicYear);
+        return ResponseEntity.ok(result);
+    }
 }

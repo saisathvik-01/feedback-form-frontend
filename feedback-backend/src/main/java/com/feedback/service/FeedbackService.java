@@ -38,8 +38,12 @@ public class FeedbackService {
 
         User user = userOpt.get();
 
-        if (feedbackRepository.existsByStudentIdAndCourseId(studentId, request.getCourseId())) {
-            throw new RuntimeException("Feedback already submitted for this course");
+        // Check for duplicate feedback: same student, course, and faculty
+        List<Feedback> existingFeedback = feedbackRepository.findByStudentIdAndCourseIdAndFacultyName(
+            studentId, request.getCourseId(), request.getFacultyName());
+        
+        if (!existingFeedback.isEmpty()) {
+            throw new RuntimeException("Feedback already submitted for this subject vs faculty. You cannot submit twice for the same course and faculty.");
         }
 
         Feedback feedback = new Feedback();

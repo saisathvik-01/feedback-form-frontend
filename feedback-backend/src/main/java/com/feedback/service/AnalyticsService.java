@@ -74,6 +74,19 @@ public class AnalyticsService {
                 .collect(Collectors.toList());
     }
 
+    public Map<Integer, Long> getRatingDistribution(UserPrincipal principal,
+                                                    String courseId,
+                                                    String facultyName,
+                                                    String section,
+                                                    String semester,
+                                                    String academicYear) {
+        List<Feedback> feedbacks = loadFeedbackForAnalytics(principal, courseId, facultyName, section, semester, academicYear);
+
+        return feedbacks.stream()
+                .filter(f -> f.getRating() != null)
+                .collect(Collectors.groupingBy(f -> f.getRating().intValue(), Collectors.counting()));
+    }
+
     private List<Feedback> loadFeedbackForAnalytics(UserPrincipal principal,
                                                     String courseId,
                                                     String facultyName,

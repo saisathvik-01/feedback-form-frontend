@@ -18,6 +18,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findBySectionContainingIgnoreCase(String section);
 
     boolean existsByStudentIdAndCourseId(Long studentId, String courseId);
+    List<Feedback> findByStudentIdAndCourseIdAndFacultyName(Long studentId, String courseId, String facultyName);
 
     @Query("SELECT f FROM Feedback f WHERE " +
            "(:course IS NULL OR LOWER(f.courseId) LIKE LOWER(CONCAT('%', :course, '%'))) AND " +
