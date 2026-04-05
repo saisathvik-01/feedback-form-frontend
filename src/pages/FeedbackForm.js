@@ -15,10 +15,16 @@ import {
   Grid,
   Alert,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
 import { courses } from '../data/demoData';
+import { submitFeedback } from '../utils/api';
 
 /**
  * FeedbackForm Component
@@ -30,17 +36,24 @@ const FeedbackForm = ({ auth }) => {
   const [formData, setFormData] = useState({
     course: '',
     faculty: '',
-    teachingQuality: 0,
-    courseContent: 0,
-    communication: 0,
-    overallSatisfaction: 0,
-    comments: '',
+    courseId: '',
+    courseName: '',
+    rating: 0,
+    comment: '',
+    ratings: {
+      content: 0,
+      teaching: 0,
+      engagement: 0,
+      facilities: 0,
+    },
   });
 
   // UI state
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [duplicateDialog, setDuplicateDialog] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   // Sample faculty data (courses imported from shared demo data)
 
@@ -90,20 +103,20 @@ const FeedbackForm = ({ auth }) => {
     if (!formData.faculty) {
       newErrors.faculty = 'Please select a faculty member';
     }
-    if (formData.teachingQuality === 0) {
-      newErrors.teachingQuality = 'Please rate teaching quality';
+    if (formData.ratings.content === 0) {
+      newErrors.content = 'Please rate course content';
     }
-    if (formData.courseContent === 0) {
-      newErrors.courseContent = 'Please rate course content';
+    if (formData.ratings.teaching === 0) {
+      newErrors.teaching = 'Please rate teaching quality';
     }
-    if (formData.communication === 0) {
-      newErrors.communication = 'Please rate communication';
+    if (formData.ratings.engagement === 0) {
+      newErrors.engagement = 'Please rate engagement';
     }
-    if (formData.overallSatisfaction === 0) {
-      newErrors.overallSatisfaction = 'Please rate overall satisfaction';
+    if (formData.ratings.facilities === 0) {
+      newErrors.facilities = 'Please rate facilities';
     }
-    if (!formData.comments.trim()) {
-      newErrors.comments = 'Please provide comments';
+    if (!formData.comment.trim()) {
+      newErrors.comment = 'Please provide feedback comments';
     }
 
     setErrors(newErrors);
@@ -111,32 +124,63 @@ const FeedbackForm = ({ auth }) => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError('');
 
-    if (validateForm()) {
-      setLoading(true);
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Find the selected course to get courseId and courseName
+      const selectedCourse = courses.find(c => c.name === formData.course);
       
-      // Simulate form submission delay
-      setTimeout(() => {
-        console.log('Form data submitted:', formData);
-        setSubmitted(true);
-        setLoading(false);
+      const feedbackPayload = {
+        courseId: selectedCourse?.id || formData.courseId,
+        courseName: formData.course,
+        facultyName: formData.faculty,
+        semester: 'Spring',
+        academicYear: '2025-26',
+        rating: formData.rating || Math.round((formData.ratings.content + formData.ratings.teaching + formData.ratings.engagement + formData.ratings.facilities) / 4),
+        comment: formData.comment,
+        ratings: formData.ratings,
+      };
 
-        // Reset form after 3 seconds
-        setTimeout(() => {
-          setFormData({
-            course: '',
-            faculty: '',
-            teachingQuality: 0,
-            courseContent: 0,
-            communication: 0,
-            overallSatisfaction: 0,
-            comments: '',
-          });
-          setSubmitted(false);
-        }, 3000);
-      }, 800);
+      await submitFeedback(feedbackPayload);
+      setSubmitted(true);
+      setLoading(false);
+
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setFormData({
+          course: '',
+          faculty: '',
+          courseId: '',
+          courseName: '',
+          rating: 0,
+          comment: '',
+          ratings: {
+            content: 0,
+            teaching: 0,
+            engagement: 0,
+            facilities: 0,
+          },
+        });
+        setSubmitted(false);
+      }, 3000);
+    } catch (error) {
+      setLoading(false);
+      const errorMessage = error.message || 'Failed to submit feedback';
+      
+      // Check if it's a duplicate submission error
+      if (errorMessage.includes('already submitted') || errorMessage.includes('twice')) {
+        setDuplicateDialog(true);
+      } else {
+        setApiError(errorMessage);
+      }
     }
   };
 
@@ -172,6 +216,22 @@ const FeedbackForm = ({ auth }) => {
                   }}
                 >
                   Thank you! Your feedback has been submitted successfully. We appreciate your valuable insights.
+                </Alert>
+              </Box>
+            )}
+
+            {/* API Error Message */}
+            {apiError && (
+              <Box sx={{ mb: 3 }}>
+                <Alert
+                  severity="error"
+                  onClose={() => setApiError('')}
+                  sx={{
+                    borderRadius: 2,
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  {apiError}
                 </Alert>
               </Box>
             )}
@@ -546,6 +606,38 @@ const FeedbackForm = ({ auth }) => {
             </Box>
           </CardContent>
         </Card>
+
+        {/* Duplicate Submission Dialog */}
+        <Dialog
+          open={duplicateDialog}
+          onClose={() => setDuplicateDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, color: '#d32f2f' }}>
+            <WarningIcon color="error" />
+            Feedback Already Submitted
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Typography variant="body1" color="textSecondary" paragraph>
+              You have already submitted feedback for this subject with this faculty member.
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#666', fontStyle: 'italic' }}>
+              Each course-faculty combination allows only one feedback submission. If you'd like to update your feedback, please contact admin support.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={() => setDuplicateDialog(false)}
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+              }}
+            >
+              OK
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );

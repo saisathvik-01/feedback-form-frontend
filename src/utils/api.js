@@ -196,6 +196,13 @@ export const getAnalyticsTrend = async (filters = {}) => {
   });
 };
 
+export const getAnalyticsRatingDistribution = async (filters = {}) => {
+  return cachedFetch(getAnalyticsUrl('rating-distribution', filters), {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
 export const downloadFeedbackCsv = async (filters = {}) => {
   const params = new URLSearchParams();
   if (filters.course) params.append('courseId', filters.course);
@@ -211,8 +218,15 @@ export const downloadFeedbackCsv = async (filters = {}) => {
   }, true);
 };
 
+export const getFacultySummary = async () => {
+  return cachedFetch(`${BASE_URL}/api/feedback/faculty-summary`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
 export const getDashboardSummary = async () => {
-  return cachedFetch(`${BASE_URL}/api/feedback/stats`, {
+  return cachedFetch(`${BASE_URL}/api/feedback/dashboard-summary`, {
     method: 'GET',
     headers: getAuthHeaders()
   });
@@ -233,4 +247,141 @@ export const getFeedbackStats = async (filters = {}) => {
     totalCourses,
     totalFaculty
   };
+};
+
+// Form Builder API functions
+export const createForm = async (formData) => {
+  const result = await safeFetch(`${BASE_URL}/api/forms`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(formData)
+  });
+  clearApiCache();
+  return result;
+};
+
+export const getAllForms = async () => {
+  return cachedFetch(`${BASE_URL}/api/forms`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const getFormById = async (formId) => {
+  return cachedFetch(`${BASE_URL}/api/forms/${formId}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const updateForm = async (formId, formData) => {
+  const result = await safeFetch(`${BASE_URL}/api/forms/${formId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(formData)
+  });
+  clearApiCache();
+  return result;
+};
+
+export const deleteForm = async (formId) => {
+  const result = await safeFetch(`${BASE_URL}/api/forms/${formId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  clearApiCache();
+  return result;
+};
+
+// Course API functions
+export const getAllCourses = async () => {
+  return cachedFetch(`${BASE_URL}/api/courses`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const getCourseById = async (courseId) => {
+  return cachedFetch(`${BASE_URL}/api/courses/${courseId}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const getCourseByCourseNameWithForm = async (courseName) => {
+  return cachedFetch(`${BASE_URL}/api/courses/by-name/${courseName}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const assignFormToCourse = async (courseId, formId) => {
+  const result = await safeFetch(`${BASE_URL}/api/courses/${courseId}/assign-form/${formId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders()
+  });
+  clearApiCache();
+  return result;
+};
+
+export const initializeDefaultCourses = async () => {
+  const result = await safeFetch(`${BASE_URL}/api/courses/initialize`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  clearApiCache();
+  return result;
+};
+
+// Response API functions
+export const submitResponse = async (responseData) => {
+  const result = await safeFetch(`${BASE_URL}/api/responses`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(responseData)
+  });
+  clearApiCache();
+  return result;
+};
+
+export const getStudentResponses = async () => {
+  return cachedFetch(`${BASE_URL}/api/responses/student`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const getResponsesByCourse = async (courseId) => {
+  return cachedFetch(`${BASE_URL}/api/responses/course/${courseId}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const getResponsesByForm = async (formId) => {
+  return cachedFetch(`${BASE_URL}/api/responses/form/${formId}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const getResponsesByCourseAndForm = async (courseId, formId) => {
+  return cachedFetch(`${BASE_URL}/api/responses/course/${courseId}/form/${formId}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const checkStudentSubmission = async (courseId) => {
+  return cachedFetch(`${BASE_URL}/api/responses/check/${courseId}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+};
+
+export const getAllResponses = async () => {
+  return cachedFetch(`${BASE_URL}/api/responses`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
 };

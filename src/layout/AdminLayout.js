@@ -34,17 +34,24 @@ const AdminLayout = ({ children }) => {
 
   // Get available routes based on user role
   const getNavItems = () => {
-    const baseItems = [
-      { path: '/feedback', label: 'Feedback Form', roles: ['ADMIN', 'FACULTY', 'STUDENT'] },
-      { path: '/analytics', label: 'Analytics', roles: ['ADMIN', 'FACULTY'] }
-    ];
+    const baseItems = [];
 
     if (user?.role === 'ADMIN') {
-      baseItems.unshift(
+      baseItems.push(
         { path: '/admin', label: 'Dashboard', roles: ['ADMIN'] },
+        { path: '/form-builder', label: 'Form Builder', roles: ['ADMIN'] },
         { path: '/submitted', label: 'Submitted Feedback', roles: ['ADMIN'] }
       );
+    } else if (user?.role === 'STUDENT') {
+      baseItems.push(
+        { path: '/student-dashboard', label: 'Courses', roles: ['STUDENT'] }
+      );
     }
+
+    baseItems.push(
+      { path: '/feedback', label: 'Feedback Form', roles: ['ADMIN', 'FACULTY', 'STUDENT'] },
+      { path: '/analytics', label: 'Analytics', roles: ['ADMIN', 'FACULTY'] }
+    );
 
     return baseItems.filter(item => item.roles.includes(user?.role));
   };

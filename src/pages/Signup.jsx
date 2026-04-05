@@ -17,8 +17,10 @@ const Signup = () => {
   const navigate = useNavigate();
 
   // Validation regexes
-  const usernameRegex = /^\d{10}$/;
-  const emailRegex = /^\d{10}@kluniversity\.in$/;
+  const studentUsernameRegex = /^\d{10}$/;
+  const studentEmailRegex = /^\d{10}@kluniversity\.in$/;
+  const facultyAdminUsernameRegex = /^.{3,}$/;
+  const generalEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
   const validateField = (name, value, currentData = formData) => {
@@ -27,13 +29,27 @@ const Signup = () => {
 
     switch (name) {
       case 'username':
-        if (!usernameRegex.test(value)) {
-          error = 'Username must be exactly 10 digits';
+        if (nextData.role === 'STUDENT') {
+          if (!studentUsernameRegex.test(value)) {
+            error = 'Student ID must be exactly 10 digits';
+          }
+        } else {
+          // FACULTY or ADMIN
+          if (!facultyAdminUsernameRegex.test(value)) {
+            error = 'Username must be at least 3 characters';
+          }
         }
         break;
       case 'email':
-        if (!emailRegex.test(value)) {
-          error = 'Email must be in format: 1234567890@kluniversity.in';
+        if (nextData.role === 'STUDENT') {
+          if (!studentEmailRegex.test(value)) {
+            error = 'Email must be in format: 1234567890@kluniversity.in';
+          }
+        } else {
+          // FACULTY or ADMIN
+          if (!generalEmailRegex.test(value)) {
+            error = 'Please enter a valid email address';
+          }
         }
         break;
       case 'password':
@@ -61,16 +77,32 @@ const Signup = () => {
     const newErrors = {};
     let isFormValid = true;
 
-    // Validate username
-    if (!usernameRegex.test(currentData.username)) {
-      newErrors.username = 'Username must be exactly 10 digits';
-      isFormValid = false;
+    // Validate username based on role
+    if (currentData.role === 'STUDENT') {
+      if (!studentUsernameRegex.test(currentData.username)) {
+        newErrors.username = 'Student ID must be exactly 10 digits';
+        isFormValid = false;
+      }
+    } else {
+      // FACULTY or ADMIN
+      if (!facultyAdminUsernameRegex.test(currentData.username)) {
+        newErrors.username = 'Username must be at least 3 characters';
+        isFormValid = false;
+      }
     }
 
-    // Validate email
-    if (!emailRegex.test(currentData.email)) {
-      newErrors.email = 'Email must be in format: 1234567890@kluniversity.in';
-      isFormValid = false;
+    // Validate email based on role
+    if (currentData.role === 'STUDENT') {
+      if (!studentEmailRegex.test(currentData.email)) {
+        newErrors.email = 'Email must be in format: 1234567890@kluniversity.in';
+        isFormValid = false;
+      }
+    } else {
+      // FACULTY or ADMIN
+      if (!generalEmailRegex.test(currentData.email)) {
+        newErrors.email = 'Please enter a valid email address';
+        isFormValid = false;
+      }
     }
 
     // Validate password
@@ -141,7 +173,7 @@ const Signup = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Student ID (Username)
+                {formData.role === 'STUDENT' ? 'Student ID (Username)' : 'Username'}
               </label>
               <div className="mt-1">
                 <input
@@ -151,7 +183,7 @@ const Signup = () => {
                   required
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Enter 10-digit Student ID"
+                  placeholder={formData.role === 'STUDENT' ? 'Enter 10-digit Student ID' : 'Enter username (min 3 characters)'}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -160,7 +192,7 @@ const Signup = () => {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                University Email
+                {formData.role === 'STUDENT' ? 'University Email' : 'Email'}
               </label>
               <div className="mt-1">
                 <input
@@ -170,7 +202,7 @@ const Signup = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="e.g., 2400032267@kluniversity.in"
+                  placeholder={formData.role === 'STUDENT' ? 'e.g., 2400032267@kluniversity.in' : 'Enter your email address'}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>

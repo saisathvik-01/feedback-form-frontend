@@ -11,14 +11,16 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { getAnalyticsFaculty, getAnalyticsSatisfaction, getAnalyticsTrend, getFeedback, downloadFeedbackCsv } from '../utils/api';
+import { getAnalyticsFaculty, getAnalyticsSatisfaction, getAnalyticsTrend, getAnalyticsRatingDistribution, getFeedback, downloadFeedbackCsv } from '../utils/api';
 
 const Analytics = () => {
   const [facultyRatings, setFacultyRatings] = useState([]);
   const [satisfaction, setSatisfaction] = useState({ poor: 0, average: 0, good: 0 });
   const [trend, setTrend] = useState([]);
+  const [ratingDistribution, setRatingDistribution] = useState({});
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [filters, setFilters] = useState({
@@ -39,14 +41,16 @@ const Analytics = () => {
   const loadAnalytics = useCallback(async () => {
     setLoading(true);
     try {
-      const [facultyData, satisfactionData, trendData] = await Promise.all([
+      const [facultyData, satisfactionData, trendData, ratingData] = await Promise.all([
         getAnalyticsFaculty(filters),
         getAnalyticsSatisfaction(filters),
-        getAnalyticsTrend(filters)
+        getAnalyticsTrend(filters),
+        getAnalyticsRatingDistribution(filters)
       ]);
       setFacultyRatings(facultyData);
       setSatisfaction(satisfactionData);
       setTrend(trendData);
+      setRatingDistribution(ratingData);
     } catch (error) {
       console.error('Error loading analytics data:', error);
     } finally {
@@ -115,6 +119,10 @@ const Analytics = () => {
     { name: 'Good', value: satisfaction.good, color: '#10b981' }
   ];
   const trendData = trend.map((item, index) => ({ ...item, index: index + 1 }));
+  const ratingData = [1, 2, 3, 4, 5].map(rating => ({
+    rating: rating,
+    count: ratingDistribution[rating] || 0
+  }));
 
   return (
     <Box sx={{ background: '#f4f6fb', minHeight: '100vh', py: 4 }}>
@@ -202,18 +210,49 @@ const Analytics = () => {
         </Card>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 16 }}>
-            <CircularProgress />
-          </Box>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Instructor Ratings
+                </Typography>
+                <Skeleton variant="rectangular" width="100%" height={280} />
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Satisfaction Distribution
+                </Typography>
+                <Skeleton variant="rectangular" width="100%" height={280} />
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Rating Distribution
+                </Typography>
+                <Skeleton variant="rectangular" width="100%" height={280} />
+              </Card>
+            </Grid>
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Submission Trend
+                </Typography>
+                <Skeleton variant="rectangular" width="100%" height={360} />
+              </Card>
+            </Grid>
+          </Grid>
         ) : (
           <Grid container spacing={3}>
-            <Grid item xs={12} lg={6}>
+            <Grid item xs={12} md={4}>
               <Card sx={{ p: 3, boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)' }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                   Instructor Ratings
                 </Typography>
                 {instructorData.length > 0 ? (
-                  <BarChart width={500} height={320} data={instructorData}>
+                  <BarChart width={350} height={280} data={instructorData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="faculty" />
                     <YAxis />
@@ -222,26 +261,26 @@ const Analytics = () => {
                     <Bar dataKey="average" fill="#2563eb" />
                   </BarChart>
                 ) : (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 320, color: '#6b7280' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 280, color: '#6b7280' }}>
                     No instructor analytics available
                   </Box>
                 )}
               </Card>
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid item xs={12} md={4}>
               <Card sx={{ p: 3, boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)' }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                   Satisfaction Distribution
                 </Typography>
                 {satisfactionData.some(item => item.value > 0) ? (
-                  <PieChart width={500} height={320}>
+                  <PieChart width={350} height={280}>
                     <Pie
                       data={satisfactionData}
-                      cx={250}
-                      cy={160}
+                      cx={175}
+                      cy={140}
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={110}
+                      outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -252,8 +291,28 @@ const Analytics = () => {
                     <Tooltip />
                   </PieChart>
                 ) : (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 320, color: '#6b7280' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 280, color: '#6b7280' }}>
                     No satisfaction data to display
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Rating Distribution
+                </Typography>
+                {ratingData.some(item => item.count > 0) ? (
+                  <BarChart width={350} height={280} data={ratingData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="rating" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#10b981" />
+                  </BarChart>
+                ) : (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 280, color: '#6b7280' }}>
+                    No rating data available
                   </Box>
                 )}
               </Card>

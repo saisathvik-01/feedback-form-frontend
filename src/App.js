@@ -12,6 +12,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import StudentFeedback from './pages/StudentFeedback';
 import SubmittedFeedback from './pages/SubmittedFeedback';
 import Analytics from './pages/Analytics';
+import FormBuilder from './pages/FormBuilder';
+import StudentDashboard from './pages/StudentDashboard';
+import StudentFormPage from './pages/StudentFormPage';
 
 function App() {
   useEffect(() => {
@@ -59,6 +62,30 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'FACULTY']}>
               <Analytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/form-builder"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <FormBuilder />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/course/:courseId/feedback"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentFormPage />
             </ProtectedRoute>
           }
         />

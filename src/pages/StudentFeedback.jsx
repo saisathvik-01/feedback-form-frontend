@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import AdminLayout from '../layout/AdminLayout';
 import { submitFeedback } from '../utils/api';
 
 const StudentFeedback = () => {
+  const location = useLocation();
   const [formData, setFormData] = useState({
     studentName: '',
     courseId: '',
@@ -21,13 +23,27 @@ const StudentFeedback = () => {
     const currentUser = JSON.parse(localStorage.getItem('user'));
     setUser(currentUser);
 
+    // Pre-fill data from navigation state (from courses page)
+    const courseData = location.state?.courseData;
+    if (courseData) {
+      setFormData(prev => ({
+        ...prev,
+        courseId: courseData.courseId || '',
+        courseName: courseData.courseName || '',
+        facultyName: courseData.facultyName || '',
+        section: courseData.section || '',
+        semester: courseData.semester || '',
+        academicYear: courseData.academicYear || ''
+      }));
+    }
+
     if (currentUser && currentUser.role === 'STUDENT') {
       setFormData(prev => ({
         ...prev,
         studentName: currentUser.username || currentUser.email
       }));
     }
-  }, []);
+  }, [location.state]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -65,7 +81,11 @@ const StudentFeedback = () => {
       alert('Feedback submitted successfully!');
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      alert(error?.message || 'Error submitting feedback. Please try again.');
+      if (error?.message?.includes('Feedback already submitted')) {
+        alert('You have already submitted feedback for this course and faculty combination. You can only submit feedback once.');
+      } else {
+        alert(error?.message || 'Error submitting feedback. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
