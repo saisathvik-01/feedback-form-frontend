@@ -19,6 +19,16 @@ const getAuthHeaders = () => {
   };
 };
 
+const logApiError = (input, init, error) => {
+  console.error('[API] Request failed', {
+    url: input,
+    method: init?.method || 'GET',
+    headers: init?.headers,
+    body: init?.body,
+    error
+  });
+};
+
 const cacheTTL = 1000 * 60;
 const apiCache = new Map();
 const pendingRequests = new Map();
@@ -34,11 +44,12 @@ const handleResponse = async (response) => {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = body?.message || body?.error || response.statusText || 'Request failed';
+    const errorText = `${response.status} ${message}`;
     if (response.status === 401) {
       logout('Session expired. Please log in again.');
       throw new Error('Session expired. Please log in again.');
     }
-    throw new Error(message);
+    throw new Error(errorText);
   }
   return body;
 };
@@ -60,8 +71,11 @@ const safeFetch = async (input, init, expectText = false) => {
     }
     return handleResponse(response);
   } catch (error) {
+    logApiError(input, init, error);
+
     if (error instanceof TypeError) {
-      throw new Error('Network error. Please check your connection and try again.');
+      const message = error.message || 'Network error. Please check your connection and try again.';
+      throw new Error(`Network error: ${message}`);
     }
     throw error;
   }
