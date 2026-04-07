@@ -19,6 +19,18 @@ const getAuthHeaders = () => {
   };
 };
 
+const isTokenExpired = () => {
+  const token = getToken();
+  if (!token) return true;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch (e) {
+    return true;
+  }
+};
+
 const logApiError = (input, init, error) => {
   console.error('[API] Request failed', {
     url: input,
@@ -46,8 +58,13 @@ const handleResponse = async (response) => {
     const message = body?.message || body?.error || response.statusText || 'Request failed';
     const errorText = `${response.status} ${message}`;
     if (response.status === 401) {
-      logout('Session expired. Please log in again.');
+      if (isTokenExpired() || !getToken()) {
+        logout('Session expired. Please log in again.');
+      }
       throw new Error('Session expired. Please log in again.');
+    }
+    if (response.status === 403) {
+      throw new Error('Access denied. Insufficient permissions.');
     }
     throw new Error(errorText);
   }
@@ -62,8 +79,13 @@ const safeFetch = async (input, init, expectText = false) => {
         const body = await response.json().catch(() => ({}));
         const message = body?.message || body?.error || response.statusText || 'Request failed';
         if (response.status === 401) {
-          logout('Session expired. Please log in again.');
+          if (isTokenExpired() || !getToken()) {
+            logout('Session expired. Please log in again.');
+          }
           throw new Error('Session expired. Please log in again.');
+        }
+        if (response.status === 403) {
+          throw new Error('Access denied. Insufficient permissions.');
         }
         throw new Error(message);
       }
@@ -79,7 +101,7 @@ const safeFetch = async (input, init, expectText = false) => {
     }
     throw error;
   }
-};
+}
 
 const cachedFetch = async (input, init = {}, expectText = false) => {
   const method = init?.method?.toUpperCase() || 'GET';
