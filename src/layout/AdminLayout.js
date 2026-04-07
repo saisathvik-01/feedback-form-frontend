@@ -49,7 +49,7 @@ const AdminLayout = ({ children }) => {
     }
 
     baseItems.push(
-      { path: '/feedback', label: 'Feedback Form', roles: ['ADMIN', 'FACULTY', 'STUDENT'] },
+      { path: '/feedback', label: 'Feedback Form', roles: ['STUDENT'] },
       { path: '/analytics', label: 'Analytics', roles: ['ADMIN', 'FACULTY'] }
     );
 
