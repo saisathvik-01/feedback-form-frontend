@@ -60,8 +60,10 @@ const handleResponse = async (response) => {
     if (response.status === 401) {
       if (isTokenExpired() || !getToken()) {
         logout('Session expired. Please log in again.');
+        throw new Error('Session expired. Please log in again.');
       }
-      throw new Error('Session expired. Please log in again.');
+      // Token is valid but request returned 401 (permission issue)
+      throw new Error('Unauthorized. Please log in again.');
     }
     if (response.status === 403) {
       throw new Error('Access denied. Insufficient permissions.');
@@ -81,8 +83,9 @@ const safeFetch = async (input, init, expectText = false) => {
         if (response.status === 401) {
           if (isTokenExpired() || !getToken()) {
             logout('Session expired. Please log in again.');
+            throw new Error('Session expired. Please log in again.');
           }
-          throw new Error('Session expired. Please log in again.');
+          throw new Error('Unauthorized. Please log in again.');
         }
         if (response.status === 403) {
           throw new Error('Access denied. Insufficient permissions.');

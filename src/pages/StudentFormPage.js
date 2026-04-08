@@ -345,9 +345,10 @@ const StudentFormPage = () => {
           </Button>
           <Button
             variant="contained"
-            startIcon={<SendIcon />}
+            startIcon={submitting ? <CircularProgress size={20} sx={{ mr: 0 }} /> : <SendIcon />}
             onClick={handleSubmit}
             disabled={submitting}
+            sx={{ minWidth: '150px' }}
           >
             {submitting ? 'Submitting...' : 'Submit Feedback'}
           </Button>

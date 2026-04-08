@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "../layout/AdminLayout";
 import { getDashboardSummary, getFacultySummary } from "../utils/api";
 import api from "../utils/api";
-import { Alert, Skeleton } from '@mui/material';
+import { Alert, Skeleton, CircularProgress } from '@mui/material';
 
 const StatCard = ({ title, value, loading, children }) => (
   <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md min-h-[120px]">
@@ -67,6 +67,7 @@ const AdminDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [userRole, setUserRole] = useState('');
   const [forms, setForms] = useState([]);
   const [formsLoading, setFormsLoading] = useState(true);
@@ -138,14 +139,20 @@ const AdminDashboard = () => {
     api.delete(`/forms/${id}`)
       .then(() => {
         setForms(forms.filter(f => f.id !== id));
+        setSuccess('Form deleted successfully');
+        setTimeout(() => setSuccess(''), 3000);
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        setError(err?.message || 'Error deleting form');
+        setTimeout(() => setError(''), 3000);
+      });
   };
 
   const createCourse = (e) => {
     e.preventDefault();
     if (!newCourse.courseCode || !newCourse.courseName) {
-      alert("Course code and name are required");
+      setError('Course code and name are required');
+      setTimeout(() => setError(''), 3000);
       return;
     }
     
@@ -153,20 +160,26 @@ const AdminDashboard = () => {
       .then(res => {
         setCourses([...courses, res.data.course]);
         setNewCourse({ courseCode: '', courseName: '', facultyName: '' });
-        alert("Course created successfully");
+        setSuccess('Course created successfully');
+        setTimeout(() => setSuccess(''), 3000);
       })
-      .catch(err => console.error(err) || alert("Error creating course"));
+      .catch(err => {
+        setError(err?.message || 'Error creating course');
+        setTimeout(() => setError(''), 3000);
+      });
   };
 
   const deleteCourse = (id) => {
-    if (window.confirm("Are you sure you want to delete this course?")) {
-      api.delete(`/courses/${id}`)
-        .then(() => {
-          setCourses(courses.filter(c => c.id !== id));
-          alert("Course deleted successfully");
-        })
-        .catch(err => console.error(err) || alert("Error deleting course"));
-    }
+    api.delete(`/courses/${id}`)
+      .then(() => {
+        setCourses(courses.filter(c => c.id !== id));
+        setSuccess('Course deleted successfully');
+        setTimeout(() => setSuccess(''), 3000);
+      })
+      .catch(err => {
+        setError(err?.message || 'Error deleting course');
+        setTimeout(() => setError(''), 3000);
+      });
   };
 
   return (
@@ -185,6 +198,12 @@ const AdminDashboard = () => {
         {error && (
           <Alert severity="error" className="mb-6">
             {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert severity="success" className="mb-6">
+            {success}
           </Alert>
         )}
 
