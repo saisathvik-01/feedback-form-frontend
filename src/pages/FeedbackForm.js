@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 
 const FeedbackForm = () => {
   const [forms, setForms] = useState([]);
@@ -9,7 +9,7 @@ const FeedbackForm = () => {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:8080/api/forms")
+    api.get("/api/forms")
       .then(res => setForms(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -58,7 +58,7 @@ const FeedbackForm = () => {
       }))
     };
 
-    axios.post("http://localhost:8080/api/feedback", feedbackData)
+    api.post("/api/feedback", feedbackData)
       .then(() => {
         setSubmitted(true);
         alert("Feedback submitted successfully!");
