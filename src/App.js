@@ -12,6 +12,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import StudentFeedback from './pages/StudentFeedback';
 import SubmittedFeedback from './pages/SubmittedFeedback';
 import Analytics from './pages/Analytics';
+import FacultyAnalytics from './pages/FacultyAnalytics';
 import FormBuilder from './pages/FormBuilder';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentFormPage from './pages/StudentFormPage';
@@ -62,6 +63,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN', 'FACULTY']}>
               <Analytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/faculty-analytics"
+          element={
+            <ProtectedRoute allowedRoles={['FACULTY']}>
+              <FacultyAnalytics />
             </ProtectedRoute>
           }
         />
