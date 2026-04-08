@@ -51,24 +51,24 @@ const StudentFormPage = () => {
 
       // Check if already submitted
       const submissionCheck = await checkStudentSubmission(courseId);
-      if (submissionCheck.data.hasSubmitted) {
+      if (submissionCheck?.hasSubmitted) {
         setErrorMessage('You have already submitted feedback for this course.');
         return;
       }
 
-      // Load course
+      // Load course information
       const courseData = await getCourseById(courseId);
-      setCourse(courseData.data);
+      const loadedCourse = Array.isArray(courseData) ? courseData[0] : courseData;
+      setCourse(loadedCourse);
 
-      // Load form
-      if (courseData.data.formId) {
-        const formData = await getFormById(courseData.data.formId);
-        setForm(formData.data);
+      // Load linked form for the course
+      if (loadedCourse?.formId) {
+        const loadedForm = await getFormById(loadedCourse.formId);
+        setForm(loadedForm);
 
-        // Initialize answers object
         const initialAnswers = {};
-        if (formData.data.questions) {
-          formData.data.questions.forEach(question => {
+        if (loadedForm?.questions) {
+          loadedForm.questions.forEach(question => {
             initialAnswers[question.id] = '';
           });
         }

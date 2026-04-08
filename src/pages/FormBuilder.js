@@ -61,7 +61,7 @@ const FormBuilder = () => {
     try {
       setLoading(true);
       const response = await getAllForms();
-      setForms(response.data || []);
+      setForms(Array.isArray(response) ? response : response.data || []);
     } catch (error) {
       console.error('Error loading forms:', error);
     } finally {

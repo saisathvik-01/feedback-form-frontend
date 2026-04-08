@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const getToken = () => localStorage.getItem('token');
 
@@ -421,3 +421,12 @@ export const getAllResponses = async () => {
     headers: getAuthHeaders()
   });
 };
+
+const api = {
+  get: (url) => cachedFetch(`${BASE_URL}${url}`, { method: 'GET', headers: getAuthHeaders() }),
+  post: (url, data) => safeFetch(`${BASE_URL}${url}`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }),
+  put: (url, data) => safeFetch(`${BASE_URL}${url}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data) }),
+  delete: (url) => safeFetch(`${BASE_URL}${url}`, { method: 'DELETE', headers: getAuthHeaders() })
+};
+
+export default api;
