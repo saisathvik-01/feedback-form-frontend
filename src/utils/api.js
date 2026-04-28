@@ -13,11 +13,15 @@ const logout = (message) => {
 
 const getAuthHeaders = () => {
   const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
-  };
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
+
+const buildHeaders = (options = {}) => ({
+  Accept: 'application/json',
+  'Content-Type': 'application/json',
+  ...getAuthHeaders(),
+  ...options.headers,
+});
 
 const isTokenExpired = () => {
   const token = getToken();
@@ -73,9 +77,14 @@ const handleResponse = async (response) => {
   return body;
 };
 
-const safeFetch = async (input, init, expectText = false) => {
+const safeFetch = async (input, init = {}, expectText = false) => {
+  const request = {
+    ...init,
+    headers: buildHeaders(init),
+  };
+
   try {
-    const response = await fetch(input, init);
+    const response = await fetch(input, request);
     if (expectText) {
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
@@ -96,7 +105,7 @@ const safeFetch = async (input, init, expectText = false) => {
     }
     return handleResponse(response);
   } catch (error) {
-    logApiError(input, init, error);
+    logApiError(input, request, error);
 
     if (error instanceof TypeError) {
       const message = error.message || 'Network error. Please check your connection and try again.';
@@ -105,6 +114,8 @@ const safeFetch = async (input, init, expectText = false) => {
     throw error;
   }
 }
+
+export const apiCall = async (url, options = {}) => safeFetch(url, options);
 
 const cachedFetch = async (input, init = {}, expectText = false) => {
   const method = init?.method?.toUpperCase() || 'GET';

@@ -56,6 +56,10 @@ const Login = () => {
 
     try {
       const response = await login(loginData.identifier, loginData.password);
+      if (!response?.token) {
+        throw new Error('Token not received from login response');
+      }
+
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
