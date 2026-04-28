@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const getToken = () => localStorage.getItem('token');
 
@@ -60,8 +60,10 @@ const handleResponse = async (response) => {
     if (response.status === 401) {
       if (isTokenExpired() || !getToken()) {
         logout('Session expired. Please log in again.');
+        throw new Error('Session expired. Please log in again.');
       }
-      throw new Error('Session expired. Please log in again.');
+      // Token is valid but request returned 401 (permission issue)
+      throw new Error('Unauthorized. Please log in again.');
     }
     if (response.status === 403) {
       throw new Error('Access denied. Insufficient permissions.');
@@ -81,8 +83,9 @@ const safeFetch = async (input, init, expectText = false) => {
         if (response.status === 401) {
           if (isTokenExpired() || !getToken()) {
             logout('Session expired. Please log in again.');
+            throw new Error('Session expired. Please log in again.');
           }
-          throw new Error('Session expired. Please log in again.');
+          throw new Error('Unauthorized. Please log in again.');
         }
         if (response.status === 403) {
           throw new Error('Access denied. Insufficient permissions.');
@@ -421,3 +424,12 @@ export const getAllResponses = async () => {
     headers: getAuthHeaders()
   });
 };
+
+const api = {
+  get: (url) => cachedFetch(`${BASE_URL}${url}`, { method: 'GET', headers: getAuthHeaders() }),
+  post: (url, data) => safeFetch(`${BASE_URL}${url}`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }),
+  put: (url, data) => safeFetch(`${BASE_URL}${url}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data) }),
+  delete: (url) => safeFetch(`${BASE_URL}${url}`, { method: 'DELETE', headers: getAuthHeaders() })
+};
+
+export default api;

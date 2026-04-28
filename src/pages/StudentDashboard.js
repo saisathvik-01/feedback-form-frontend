@@ -32,15 +32,16 @@ const StudentDashboard = () => {
     try {
       setLoading(true);
       const coursesData = await getAllCourses();
-      setCourses(coursesData.data || []);
+      setCourses(Array.isArray(coursesData) ? coursesData : coursesData.data || []);
       
       // Check submission status for each course
-      if (coursesData.data) {
+      const courseList = Array.isArray(coursesData) ? coursesData : coursesData.data || [];
+      if (courseList.length) {
         const statuses = {};
-        for (const course of coursesData.data) {
+        for (const course of courseList) {
           try {
             const result = await checkStudentSubmission(course.id);
-            statuses[course.id] = result.data.hasSubmitted || false;
+            statuses[course.id] = result?.hasSubmitted || false;
           } catch (error) {
             statuses[course.id] = false;
           }

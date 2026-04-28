@@ -45,6 +45,8 @@ const FormBuilder = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    courseId: '',
+    facultyName: '',
     isActive: true,
     questions: []
   });
@@ -59,7 +61,7 @@ const FormBuilder = () => {
     try {
       setLoading(true);
       const response = await getAllForms();
-      setForms(response.data || []);
+      setForms(Array.isArray(response) ? response : response.data || []);
     } catch (error) {
       console.error('Error loading forms:', error);
     } finally {
@@ -73,6 +75,8 @@ const FormBuilder = () => {
       setFormData({
         title: form.title,
         description: form.description || '',
+        courseId: form.courseId || '',
+        facultyName: form.facultyName || '',
         isActive: form.isActive,
         questions: form.questions.map(q => ({
           id: q.id,
@@ -87,6 +91,8 @@ const FormBuilder = () => {
       setFormData({
         title: '',
         description: '',
+        courseId: '',
+        facultyName: '',
         isActive: true,
         questions: []
       });
@@ -101,6 +107,8 @@ const FormBuilder = () => {
     setFormData({
       title: '',
       description: '',
+      courseId: '',
+      facultyName: '',
       isActive: true,
       questions: []
     });
@@ -417,6 +425,22 @@ const FormBuilder = () => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               multiline
               rows={2}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              label="Course ID"
+              value={formData.courseId}
+              onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              label="Faculty Name"
+              value={formData.facultyName}
+              onChange={(e) => setFormData({ ...formData, facultyName: e.target.value })}
               sx={{ mb: 2 }}
             />
 

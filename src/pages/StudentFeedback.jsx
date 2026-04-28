@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import AdminLayout from '../layout/AdminLayout';
-import { submitFeedback } from '../utils/api';
+import { submitFeedback, getAllForms } from '../utils/api';
 
 const StudentFeedback = () => {
   const location = useLocation();
@@ -17,6 +17,9 @@ const StudentFeedback = () => {
     comment: ''
   });
   const [loading, setLoading] = useState(false);
+  const [forms, setForms] = useState([]);
+  const [formsLoading, setFormsLoading] = useState(true);
+  const [formsError, setFormsError] = useState('');
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -43,7 +46,23 @@ const StudentFeedback = () => {
         studentName: currentUser.username || currentUser.email
       }));
     }
+
+    loadForms();
   }, [location.state]);
+
+  const loadForms = async () => {
+    try {
+      setFormsLoading(true);
+      const response = await getAllForms();
+      setForms(Array.isArray(response) ? response : response.data || []);
+      setFormsError('');
+    } catch (error) {
+      console.error('Error loading forms:', error);
+      setFormsError(error?.message || 'Unable to load forms.');
+    } finally {
+      setFormsLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -95,6 +114,36 @@ const StudentFeedback = () => {
     <AdminLayout>
       <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold mb-6 text-gray-800">Student Feedback Form</h1>
+
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-800">Available Feedback Forms</h2>
+              <p className="text-sm text-gray-500">Forms fetched from the backend will appear here.</p>
+            </div>
+          </div>
+          {formsLoading ? (
+            <p className="text-sm text-gray-500">Loading forms...</p>
+          ) : formsError ? (
+            <p className="text-sm text-red-500">{formsError}</p>
+          ) : forms.length === 0 ? (
+            <p className="text-sm text-gray-500">No forms are currently available.</p>
+          ) : (
+            <div className="grid gap-4">
+              {forms.map((form) => (
+                <div key={form.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-gray-800">{form.title}</h3>
+                    <span className="text-xs text-gray-500">{form.questions?.length || 0} questions</span>
+                  </div>
+                  {form.description && <p className="text-sm text-gray-600 mb-2">{form.description}</p>}
+                  {form.facultyName && <p className="text-sm text-gray-600">Faculty: {form.facultyName}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Student Name/ID</label>

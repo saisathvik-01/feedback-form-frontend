@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Alert, CircularProgress } from '@mui/material';
 import { signup } from '../utils/api';
 
 const Signup = () => {
@@ -14,6 +15,8 @@ const Signup = () => {
   });
   const [errors, setErrors] = useState({});
   const [isValid, setIsValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
   // Validation regexes
@@ -124,7 +127,13 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const nextFormData = { ...formData, [name]: value };
+    let nextFormData = { ...formData, [name]: value };
+
+    // Auto-populate email for students when 10-digit ID is entered
+    if (name === 'username' && formData.role === 'STUDENT' && value.length === 10 && /^\d{10}$/.test(value)) {
+      nextFormData.email = `${value}@kluniversity.in`;
+    }
+
     setFormData(nextFormData);
 
     // Validate field on change with the latest values
@@ -142,6 +151,8 @@ const Signup = () => {
     }
 
     try {
+      setIsLoading(true);
+      setErrors({});
       await signup({
         username: formData.username,
         email: formData.email,
@@ -150,10 +161,14 @@ const Signup = () => {
         facultyName: formData.facultyName,
         section: formData.section
       });
-      navigate('/login');
+      setSuccessMessage('Account created successfully! Redirecting to login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
     } catch (error) {
       setErrors({ form: error?.message || 'Failed to create account. Please try again.' });
       setIsValid(false);
+      setIsLoading(false);
     }
   };
 
@@ -202,7 +217,9 @@ const Signup = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder={formData.role === 'STUDENT' ? 'e.g., 2400032267@kluniversity.in' : 'Enter your email address'}
+                  placeholder={formData.role === 'STUDENT' ? 'Auto-filled after entering Student ID' : 'Enter your email address'}
+                  autoComplete="off"
+                  readOnly={formData.role === 'STUDENT' && formData.email}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -301,22 +318,34 @@ const Signup = () => {
               </>
             )}
 
+            {successMessage && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {successMessage}
+              </Alert>
+            )}
             {errors.form && (
-              <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+              <Alert severity="error" sx={{ mb: 2 }}>
                 {errors.form}
-              </div>
+              </Alert>
             )}
             <div>
               <button
                 type="submit"
-                disabled={!isValid}
-                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                  isValid
+                disabled={!isValid || isLoading}
+                className={`group relative w-full flex justify-center items-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                  isValid && !isLoading
                     ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
                     : 'bg-gray-400 cursor-not-allowed'
                 } focus:outline-none focus:ring-2 focus:ring-offset-2`}
               >
-                Sign up
+                {isLoading ? (
+                  <>
+                    <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
+                    Creating account...
+                  </>
+                ) : (
+                  'Sign up'
+                )}
               </button>
             </div>
 

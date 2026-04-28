@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../layout/AdminLayout";
 import { getDashboardSummary, getFacultySummary } from "../utils/api";
-import { Alert, Skeleton } from '@mui/material';
+import api from "../utils/api";
+import { Alert, Skeleton, CircularProgress } from '@mui/material';
 
 const StatCard = ({ title, value, loading, children }) => (
   <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md min-h-[120px]">
@@ -52,6 +53,7 @@ const TopFacultyCard = ({ faculty, rating, loading }) => (
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
+    totalForms: 0,
     totalFeedback: 0,
     averageRating: 0,
     totalCourses: 0,
@@ -65,7 +67,13 @@ const AdminDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [userRole, setUserRole] = useState('');
+  const [forms, setForms] = useState([]);
+  const [formsLoading, setFormsLoading] = useState(true);
+  const [courses, setCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [newCourse, setNewCourse] = useState({ courseCode: '', courseName: '', facultyName: '' });
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -85,6 +93,7 @@ const AdminDashboard = () => {
           // For admin, load full dashboard summary
           const data = await getDashboardSummary();
           setStats({
+            totalForms: data.totalForms ?? 0,
             totalFeedback: data.totalFeedback,
             averageRating: data.averageRating,
             totalCourses: data.totalCourses ?? 0,
@@ -106,6 +115,73 @@ const AdminDashboard = () => {
     loadStats();
   }, []);
 
+  useEffect(() => {
+    api.get("/forms")
+      .then(res => {
+        console.log("Forms:", res.data);
+        setForms(res.data);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setFormsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    api.get("/courses")
+      .then(res => {
+        console.log("Courses:", res.data);
+        setCourses(res.data);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setCoursesLoading(false));
+  }, []);
+
+  const deleteForm = (id) => {
+    api.delete(`/forms/${id}`)
+      .then(() => {
+        setForms(forms.filter(f => f.id !== id));
+        setSuccess('Form deleted successfully');
+        setTimeout(() => setSuccess(''), 3000);
+      })
+      .catch(err => {
+        setError(err?.message || 'Error deleting form');
+        setTimeout(() => setError(''), 3000);
+      });
+  };
+
+  const createCourse = (e) => {
+    e.preventDefault();
+    if (!newCourse.courseCode || !newCourse.courseName) {
+      setError('Course code and name are required');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    
+    api.post("/courses", newCourse)
+      .then(res => {
+        setCourses([...courses, res.data.course]);
+        setNewCourse({ courseCode: '', courseName: '', facultyName: '' });
+        setSuccess('Course created successfully');
+        setTimeout(() => setSuccess(''), 3000);
+      })
+      .catch(err => {
+        setError(err?.message || 'Error creating course');
+        setTimeout(() => setError(''), 3000);
+      });
+  };
+
+  const deleteCourse = (id) => {
+    api.delete(`/courses/${id}`)
+      .then(() => {
+        setCourses(courses.filter(c => c.id !== id));
+        setSuccess('Course deleted successfully');
+        setTimeout(() => setSuccess(''), 3000);
+      })
+      .catch(err => {
+        setError(err?.message || 'Error deleting course');
+        setTimeout(() => setError(''), 3000);
+      });
+  };
+
   return (
     <AdminLayout>
       <div className="p-6 bg-gray-50 dark:bg-slate-950 min-h-screen">
@@ -122,6 +198,12 @@ const AdminDashboard = () => {
         {error && (
           <Alert severity="error" className="mb-6">
             {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert severity="success" className="mb-6">
+            {success}
           </Alert>
         )}
 
@@ -146,24 +228,105 @@ const AdminDashboard = () => {
             <div></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.totalFeedback > 0 || loading ? (
               <>
+                <StatCard title="Total Forms" value={stats.totalForms} loading={loading} />
                 <StatCard title="Total Feedback" value={stats.totalFeedback} loading={loading} />
-                <StatCard title="Average Rating" value={stats.averageRating} loading={loading} />
                 <StatCard title="Total Courses" value={stats.totalCourses} loading={loading} />
-                <TopFacultyCard
-                  faculty={stats.topFaculty.name}
-                  rating={stats.topFaculty.rating}
-                  loading={loading}
-                />
               </>
             ) : (
-              <div className="col-span-4 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-md text-center">
+              <div className="col-span-3 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-md text-center">
                 <h3 className="text-gray-500 dark:text-slate-400 text-lg font-medium mb-2">No Feedback Data</h3>
                 <p className="text-gray-400 dark:text-slate-500">No feedback has been submitted yet. Start collecting feedback from students!</p>
               </div>
             )}
+          </div>
+        )}
+
+        {userRole === 'ADMIN' && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold mb-4">Created Forms</h2>
+            {formsLoading ? (
+              <p>Loading forms...</p>
+            ) : forms.length === 0 ? (
+              <p>No forms created yet</p>
+            ) : (
+              forms.map(form => (
+                <div key={form.id} className="p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-md mb-3">
+                  <h3 className="font-semibold text-gray-800 dark:text-slate-100">{form.title}</h3>
+                  <button
+                    onClick={() => deleteForm(form.id)}
+                    className="mt-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))
+            )}
+
+            <h2 className="text-xl font-bold mb-4 mt-8">Manage Courses</h2>
+            <div className="mb-6 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-md">
+              <h3 className="font-semibold mb-4">Create New Course</h3>
+              <form onSubmit={createCourse} className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Course Code (e.g., FSAD)"
+                  value={newCourse.courseCode}
+                  onChange={(e) => setNewCourse({...newCourse, courseCode: e.target.value})}
+                  className="w-full p-2 border rounded dark:bg-slate-800 dark:text-white"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Course Name"
+                  value={newCourse.courseName}
+                  onChange={(e) => setNewCourse({...newCourse, courseName: e.target.value})}
+                  className="w-full p-2 border rounded dark:bg-slate-800 dark:text-white"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Faculty Name (optional)"
+                  value={newCourse.facultyName}
+                  onChange={(e) => setNewCourse({...newCourse, facultyName: e.target.value})}
+                  className="w-full p-2 border rounded dark:bg-slate-800 dark:text-white"
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+                >
+                  Create Course
+                </button>
+              </form>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-3">All Courses</h3>
+              {coursesLoading ? (
+                <p>Loading courses...</p>
+              ) : courses.length === 0 ? (
+                <p>No courses available</p>
+              ) : (
+                courses.map(course => (
+                  <div key={course.id} className="p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-md mb-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold text-gray-800 dark:text-slate-100">{course.courseName}</p>
+                        <p className="text-sm text-gray-600 dark:text-slate-400">Code: {course.courseCode}</p>
+                        {course.facultyName && <p className="text-sm text-gray-600 dark:text-slate-400">Faculty: {course.facultyName}</p>}
+                      </div>
+                      <button
+                        onClick={() => deleteCourse(course.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
       </div>
