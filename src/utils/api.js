@@ -83,6 +83,17 @@ const safeFetch = async (input, init = {}, expectText = false) => {
     headers: buildHeaders(init),
   };
 
+  if (process.env.NODE_ENV !== 'production') {
+    console.debug('[API] request', {
+      url: input,
+      method: request.method || 'GET',
+      headers: request.headers,
+      body: request.body,
+      tokenPresent: !!getToken(),
+      tokenSample: getToken()?.slice(0, 10) || null,
+    });
+  }
+
   try {
     const response = await fetch(input, request);
     if (expectText) {
@@ -90,6 +101,14 @@ const safeFetch = async (input, init = {}, expectText = false) => {
         const body = await response.json().catch(() => ({}));
         const message = body?.message || body?.error || response.statusText || 'Request failed';
         if (response.status === 401) {
+          console.warn('[API] 401 response', {
+            url: input,
+            status: response.status,
+            statusText: response.statusText,
+            tokenPresent: !!getToken(),
+            tokenExpired: isTokenExpired(),
+            responseBody: body,
+          });
           if (isTokenExpired() || !getToken()) {
             logout('Session expired. Please log in again.');
             throw new Error('Session expired. Please log in again.');
@@ -152,9 +171,8 @@ export const clearApiCache = () => {
 };
 
 export const login = async (identifier, password) => {
-  return safeFetch(`${BASE_URL}/api/auth/login`, {
+  return apiCall(`${BASE_URL}/api/auth/login`, {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify({ identifier, password })
   });
 };
@@ -165,17 +183,15 @@ export const signup = async (data) => {
     role: data.role?.toUpperCase()
   };
 
-  return safeFetch(`${BASE_URL}/api/auth/signup`, {
+  return apiCall(`${BASE_URL}/api/auth/signup`, {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(payload)
   });
 };
 
 export const submitFeedback = async (feedback) => {
-  const result = await safeFetch(`${BASE_URL}/api/feedback`, {
+  const result = await apiCall(`${BASE_URL}/api/feedback`, {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify({
       courseId: feedback.courseId,
       courseName: feedback.courseName,
@@ -437,10 +453,10 @@ export const getAllResponses = async () => {
 };
 
 const api = {
-  get: (url) => cachedFetch(`${BASE_URL}${url}`, { method: 'GET', headers: getAuthHeaders() }),
-  post: (url, data) => safeFetch(`${BASE_URL}${url}`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }),
-  put: (url, data) => safeFetch(`${BASE_URL}${url}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data) }),
-  delete: (url) => safeFetch(`${BASE_URL}${url}`, { method: 'DELETE', headers: getAuthHeaders() })
+  get: (url) => cachedFetch(`${BASE_URL}${url}`, { method: 'GET' }),
+  post: (url, data) => apiCall(`${BASE_URL}${url}`, { method: 'POST', body: JSON.stringify(data) }),
+  put: (url, data) => apiCall(`${BASE_URL}${url}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (url) => apiCall(`${BASE_URL}${url}`, { method: 'DELETE' })
 };
 
 export default api;

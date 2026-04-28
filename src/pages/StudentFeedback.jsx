@@ -72,18 +72,25 @@ const StudentFeedback = () => {
     e.preventDefault();
     setLoading(true);
 
+    const payload = {
+      courseId: formData.courseId,
+      courseName: formData.courseName,
+      facultyName: formData.facultyName,
+      semester: formData.semester,
+      academicYear: formData.academicYear,
+      section: formData.section,
+      rating: Number(formData.rating),
+      comment: formData.comment,
+      ratings: { overall: Number(formData.rating) }
+    };
+
+    console.debug('[Feedback] submitFeedback payload', payload, {
+      tokenPresent: !!localStorage.getItem('token'),
+      tokenPreview: localStorage.getItem('token')?.slice(0, 10)
+    });
+
     try {
-      await submitFeedback({
-        courseId: formData.courseId,
-        courseName: formData.courseName,
-        facultyName: formData.facultyName,
-        semester: formData.semester,
-        academicYear: formData.academicYear,
-        section: formData.section,
-        rating: Number(formData.rating),
-        comment: formData.comment,
-        ratings: { overall: Number(formData.rating) }
-      });
+      await submitFeedback(payload);
 
       setFormData({
         studentName: user?.role === 'STUDENT' ? (user.username || user.email) : '',

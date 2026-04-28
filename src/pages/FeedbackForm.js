@@ -58,6 +58,11 @@ const FeedbackForm = () => {
       }))
     };
 
+    console.debug('[FeedbackForm] submit feedback', feedbackData, {
+      tokenPresent: !!localStorage.getItem('token'),
+      tokenPreview: localStorage.getItem('token')?.slice(0, 10)
+    });
+
     api.post("/api/feedback", feedbackData)
       .then(() => {
         setSubmitted(true);
